@@ -1,8 +1,49 @@
-import React from 'react'
-import { Link} from 'react-router-dom'
+import React from 'react';
+import { Link, Redirect } from 'react-router-dom';
+import { connect } from 'react-redux';
+import { onLogin } from './../1.actions';
+import Loader from 'react-loader-spinner';
+import Cookie from 'universal-cookie';
 
+// MENYIMPAN DATA DI BROWSER
+const cookie = new Cookie()
 class Login extends React.Component{
+    // KE-TRIGGER KALO ADA PERUBAHAN PROPS YAITU GLOBAL STATE
+    componentWillReceiveProps(newProps){
+        cookie.set('userData',newProps.username,{path: '/'})
+    }
+    onBtnLoginClick = () =>{
+        var username = this.refs.username.value
+        var password = this.refs.password.value
+        this.props.onLogin(username,password)
+    }
+
+    rednerBtnOrLoading = () => {
+        if(this.props.loading===true){
+            return <Loader 
+                    type="ThreeDots"
+                    color="#00BFFF"
+                    height="50"	
+                    width="50"/>
+        }
+        else{
+            return <button type="button" className="btn btn-primary" onClick={this.onBtnLoginClick} style={{width:"350px"}} ><i className="fas fa-sign-in-alt" /> Login</button>
+        }
+    }
+    
+    renderErrorMsg = () => {
+        if(this.props.error!==''){
+            return <div class="alert alert-danger mt-3" role="alert">
+            {this.props.error}
+            </div>
+        }
+    }
+
     render(){
+        if(this.props.username!==''){
+            return <Redirect to='/'/>
+        }
+
         return(
             <div className="container myBody" style={{minHeight:"600px"}}>
                 <div className="row justify-content-sm-center ml-auto mr-auto mt-3" >
@@ -25,12 +66,13 @@ class Login extends React.Component{
                             </div>
                             
                             <div className="form-group row">
-                                <div className="col-12">
-                                 <button type="button" className="btn btn-primary" onClick={this.onBtnLoginClick} style={{width:"300px"}} ><i className="fas fa-sign-in-alt" /> Login</button>
+                                <div className="col-12" style={{textAlign:"center"}}>
+                                {this.rednerBtnOrLoading()}
+                                {this.renderErrorMsg()}
                                 </div>
                                     
                             </div>
-                            <div className="btn my-auto"><p>Don't have Account? <Link to="/register" className="border-bottom">Sign Up!</Link></p></div>
+                            <div className="btn my-auto"><p>Don't have an account yet? <Link to="/register" className="border-bottom">Sign Up!</Link></p></div>
                         </fieldset>
                     </form>
                     
@@ -40,4 +82,12 @@ class Login extends React.Component{
     }
 }
 
-export default Login
+const mapStateToProps = (state) => {
+    return {
+        username: state.user.username,
+        loading: state.user.loading,
+        error: state.user.error
+    }
+}
+
+export default connect(mapStateToProps,{onLogin})(Login);
